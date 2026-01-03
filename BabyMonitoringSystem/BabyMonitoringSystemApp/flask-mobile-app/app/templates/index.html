@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baby Monitor Mobile</title>
+    <style>
+        body { font-family: Arial; padding: 10px; background: #f7f7fa; }
+        .alert { background: #ffdddd; margin: 10px 0; padding: 10px; border-radius: 8px; }
+        .critical { background: #ff4444; color: #fff; }
+        .video-container { width: 100%; max-width: 480px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px #aaa; }
+        img, video { width: 100%; display: block; }
+        h2 { text-align: center; }
+        .status { text-align: center; margin: 10px 0; color: #666; }
+    </style>
+</head>
+<body>
+    <h2>👶 Baby Monitor</h2>
+    <div class="video-container">
+        <img id="video" src="/video" alt="Live Video">
+    </div>
+    <div class="status" id="status">Loading alerts...</div>
+    <div id="alerts"></div>
+    <script>
+        let lastAlertTimestamp = 0;
+
+        // Request notification permission
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+
+        async function fetchAlerts() {
+            try {
+                const res = await fetch('/alerts');
+                const data = await res.json();
+                const alertsDiv = document.getElementById('alerts');
+                const statusDiv = document.getElementById('status');
+                alertsDiv.innerHTML = '';
+                if (!data.alerts || data.alerts.length === 0) {
+                    statusDiv.textContent = "No alerts detected.";
+                } else {
+                    statusDiv.textContent = `${data.total} alert(s) in last minute.`;
+                }
+                (data.alerts || []).slice(0, 5).forEach(a => {
+                    const d = document.createElement('div');
+                    d.className = 'alert' + (a.type === 'CRITICAL' ? ' critical' : '');
+                    d.textContent = `[${a.type}] ${a.message}`;
+                    alertsDiv.appendChild(d);
+
+                    // Show notification for new critical alerts
+                    if (a.type === 'CRITICAL' && a.timestamp > lastAlertTimestamp) {
+                        showNotification(a.message);
+                        lastAlertTimestamp = a.timestamp;
+                    }
+                });
+            } catch (e) {
+                document.getElementById('status').textContent = "Error fetching alerts.";
+            }
+        }
+
+        function showNotification(msg) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("🚨 Baby Monitor Alert", { body: msg });
+            }
+            // Vibrate if supported
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200]);
+            }
+        }
+
+        setInterval(fetchAlerts, 3000);
+        fetchAlerts();
+    </script>
+</body>
+</html>
