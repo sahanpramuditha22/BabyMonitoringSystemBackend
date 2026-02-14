@@ -1,4 +1,4 @@
-BACKEND_URL = "http://192.168.1.143:5001"  # <-- Change to your backend's IP and port
+BACKEND_URL = "http://172.20.10.2:5001"  # <-- Change to your backend's IP and port
 class Config:
     DEBUG = True
     TESTING = False

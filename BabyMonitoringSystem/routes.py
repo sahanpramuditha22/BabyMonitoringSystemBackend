@@ -38,3 +38,10 @@ def register_routes(app):
         camera = get_camera_handler()
         summary = camera.detection.get_alerts_summary()
         return jsonify(summary)
+    
+    @app.route('/snapshot')
+    def snapshot():
+        """Get current frame as JPEG snapshot"""
+        camera = get_camera_handler()
+        frame = camera.get_current_frame()
+        return Response(frame, mimetype='image/jpeg')
